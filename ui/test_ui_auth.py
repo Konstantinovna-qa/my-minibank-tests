@@ -69,4 +69,60 @@ class TestUIAuthentication:
         dashboard_page.assert_page_loaded()
         
         current_url = driver.current_url
-        assert "dashboard" in current_url.lower(), f"VIP user not on dashboard: {current_url}" 
+        assert "dashboard" in current_url.lower(), f"VIP user not on dashboard: {current_url}"
+
+    @pytest.mark.ui
+    @pytest.mark.auth
+    def test_basic_login(self, driver):
+        """Тест базового логина пользователя с ролью USER"""
+        login_page = LoginPage(driver)
+        login_page.navigate_to()  # Открываем страницу
+        login_page.assert_page_loaded()  # Проверяем, что страница загрузилась
+
+        user = settings.get_user(UserRole.USER)  # Получаем данные обычного пользователя USER
+        login_page.login(user.email,user.password)  # Выполняем логин: вводим email, пароль и нажимаем кнопку входа
+
+        dashboard_page = DashboardPage(driver)
+        dashboard_page.assert_page_loaded()  # Проверяем, что после логина загрузилась страница Dashboard
+
+
+        current_url = driver.current_url  # Получаем URL страницы
+        assert "dashboard" in current_url.lower(), f"User not on dashboard: {current_url}"  # Проверяем, что в URL есть слово "dashboard"
+
+
+    @pytest.mark.ui
+    @pytest.mark.auth
+    def test_login_logout_flow(self, driver):
+        """Тест логина и выхода пользователя"""
+
+        login_page = LoginPage(driver)
+        login_page.navigate_to()  # Открываем страницу
+        login_page.assert_page_loaded()  # Проверяем, что страница загрузилась
+
+        user = settings.get_user(UserRole.USER)  # Получаем данные пользователя USER
+        login_page.login(user.email, user.password)  # Выполняем логин
+
+        dashboard_page = DashboardPage(driver)
+        dashboard_page.assert_page_loaded()  # Проверяем, что Dashboard загрузился
+
+        dashboard_page.logout()  # Кликаем logout
+        login_page.wait_until_loaded()  # Ждём появления формы логина
+
+        current_url = driver.current_url  # Получили URL
+        assert "login" in current_url.lower(), f"User not on login page: {current_url}"  # Проверили URL
+
+
+    @pytest.mark.ui
+    @pytest.mark.auth
+    def test_login_with_wrong_password(self, driver):
+        """Тест логина с неправильным паролем"""
+
+        login_page = LoginPage(driver)
+        login_page.navigate_to()  # Открываем страницу
+        login_page.assert_page_loaded()  # Проверяем, что страница загрузилась
+
+        user = settings.get_user(UserRole.USER)  # Получаем данные пользователя USER
+        login_page.enter_email(user.email)  # Вводим email
+        login_page.enter_password("333")  # Вводим неправельный пароль
+        login_page.click_submit()  # Нажимает кнопку входа
+        login_page.assert_error_visible()  # Ожидаем появления ошибки, затем проверяем её
