@@ -2,23 +2,21 @@ from typing import Any
 
 import pytest
 from config.settings import settings, UserRole
-from api.test_auth import TestAuthenticationAPI
-from conftest import MiniBankAPIClient
+
 
 
 @pytest.mark.api
 @pytest.mark.auth
-def test_my_first_api_login(self, api_client):
+def test_my_first_api_login(api_client):
     """Мой первый API тест логина"""
     test_user = settings.get_user(UserRole.USER)
     response = api_client.login(test_user.email, test_user.password)
 
-    test_auth = TestAuthenticationAPI()
+    assert response.success, f"Login failed: {response.message}"
+    assert response.status_code == 200
 
-    test_auth.test_valid_login(api_client)
-    test_auth.test_role_based_login(api_client)
 
-    print(response.data)
+
 
 
 @pytest.mark.api
@@ -27,15 +25,13 @@ class TestMyAuthAPI:
     def test_login_wrong_password(self, api_client):
         """Тест с неправильным паролем"""
 
-        response = api_client.login("user@bank.test", "All hismakesmeangry222")  # Выполняет вход с email и неверным паролем
+        test_user = settings.get_user(UserRole.USER)
+        login_response = api_client.login(test_user.email,"All hismakesmeangry222")  # Выполняет вход с email и неверным паролем
 
-        assert not response.success, "Login with invalid credentials should fail"  # Проверяет, что НЕ успешен
-        assert response.status_code in [401, 403,]  # Проверяет, что HTTP статус код ответа находится в списке [401, 403]
-
-
-        if 'token' in response.data:
-            token = response.data['token']
-            assert len(token) > 0, "Token should not be empty"  # Проверяет, что длина строки token больше 0 (токен не пустой)
+        assert not login_response.success, "Login with invalid credentials should fail"  # Проверяет, что НЕ успешен
+        assert login_response.status_code in [401, 403]  # Проверяет, что HTTP статус код ответа находится в списке [401, 403]
+        data = login_response.data or {}
+        assert 'token' not in data, "Token should not be present on failed login"
 
 
     def test_already_logged_in_user(self, logged_in_user):
@@ -44,7 +40,6 @@ class TestMyAuthAPI:
         assert logged_in_user is not None  # Проверяем, что пользователь получен
         assert isinstance(logged_in_user, dict)   # Проверяем, что это словарь
 
-        print(logged_in_user)
 
     def test_token_validation(self, api_client):
         """Тест валидации токена"""
