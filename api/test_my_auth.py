@@ -4,24 +4,31 @@ import pytest
 from config.settings import settings, UserRole
 
 
-
-@pytest.mark.api
-@pytest.mark.auth
-def test_my_first_api_login(api_client):
-    """Мой первый API тест логина"""
-    test_user = settings.get_user(UserRole.USER)
-    response = api_client.login(test_user.email, test_user.password)
-
-    assert response.success, f"Login failed: {response.message}"
-    assert response.status_code == 200
-
-
-
-
-
 @pytest.mark.api
 @pytest.mark.auth
 class TestMyAuthAPI:
+    def test_my_first_api_login(self, api_client):
+        """Мой первый API тест логина"""
+
+        test_user = settings.get_user(UserRole.USER)  # Получаем тестового пользователя с ролью USER из настроек
+        response = api_client.login(test_user.email, test_user.password)  # Выполняем запрос логина с email и паролем тестового пользователя
+
+        assert response.success, f"Login failed: {response.message}"  # Проверяем, что запрос выполнен успешно
+        assert response.status_code == 200  # Проверяем, что HTTP статус код равен 200
+
+
+        if 'token' in response.data:  # Проверяем наличие и валидность токена в ответе
+            token = response.data['token']
+            assert isinstance(token, str), "Token should be string"
+            assert len(token) > 0, "Token should not be empty"
+
+
+        if 'user' in response.data:  # Проверяем наличие и корректность данных пользователя в ответе
+            user_info = response.data['user']
+            assert user_info['email'] == test_user.email  # Проверяем соответствие email
+            assert user_info['role'] == test_user.role  # Проверяем соответствие роли
+
+
     def test_login_wrong_password(self, api_client):
         """Тест с неправильным паролем"""
 
