@@ -16,17 +16,20 @@ class TestMyAuthAPI:
         assert response.success, f"Login failed: {response.message}"  # Проверяем, что запрос выполнен успешно
         assert response.status_code == 200  # Проверяем, что HTTP статус код равен 200
 
+        assert 'token' in response.data, "Token field is missing in response"
+        token = response.data['token']
+        assert isinstance(token, str), "Token should be string"
+        assert len(token) > 0, "Token should not be empty"
 
-        if 'token' in response.data:  # Проверяем наличие и валидность токена в ответе
-            token = response.data['token']
-            assert isinstance(token, str), "Token should be string"
-            assert len(token) > 0, "Token should not be empty"
+        assert 'user' in response.data, "User field is missing in response"  # Проверка наличия пользователя
+        user_info = response.data['user']
 
+        assert 'email' in user_info, "Email field is missing in user data"  # Проверка email
+        assert user_info['email'] == test_user.email, f"Expected email {test_user.email}, got {user_info['email']}"
 
-        if 'user' in response.data:  # Проверяем наличие и корректность данных пользователя в ответе
-            user_info = response.data['user']
-            assert user_info['email'] == test_user.email  # Проверяем соответствие email
-            assert user_info['role'] == test_user.role  # Проверяем соответствие роли
+        assert 'role' in user_info, "Role field is missing in user data"   # Проверяем роль
+        expected_role = test_user.role.value
+        assert user_info['role'] == expected_role, f"Expected role {expected_role}, got {user_info['role']}"
 
 
     def test_login_wrong_password(self, api_client):
