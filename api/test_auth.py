@@ -28,7 +28,7 @@ class TestAuthenticationAPI:
         test_user = settings.get_user(UserRole.USER)
         
         response = api_client.login(test_user.email, test_user.password)
-        
+
         assert response.success, f"Login failed: {response.message}"
         assert response.status_code == 200
         assert response.data is not None
