@@ -54,93 +54,78 @@ class TestMyAuthAPI:
         assert validation_response.status_code == 200
 
 
-@pytest.mark.api
-@pytest.mark.auth
-def test_login_as_user(api_client):
-    """Тест логина с ролью user"""
-
-    test_user = settings.get_user(UserRole.USER)
-    response = api_client.login(test_user.email, test_user.password)
-
-    assert response.success, f"Login failed: {response.message}"
-    assert response.status_code == 200
-
 
 @pytest.mark.api
 @pytest.mark.auth
-def test_login_as_vip(api_client):
-    """Тест логина с ролью vip"""
+class TestMyAuthAPI:
 
-    test_user = settings.get_user(UserRole.VIP_USER)
-    response = api_client.login(test_user.email, test_user.password)
+    @pytest.mark.parametrize("role", [
+        UserRole.USER,
+        UserRole.VIP_USER,
+        UserRole.ADMIN,
+        UserRole.SUPPORT
+    ], ids=["login_user", "login_vip_user", "login_admin", "login_support"])
+    def test_login_different_roles(self, api_client, role):
+        """Тест логина разных ролей через параметризацию"""
+        user = settings.get_user(role)
+        response = api_client.login(user.email, user.password)
 
-    assert response.success, f"Login failed: {response.message}"
-    assert response.status_code == 200
-
-
-@pytest.mark.api
-@pytest.mark.auth
-def test_login_as_admin(api_client):
-    """Тест логина с ролью admin"""
-
-    test_user = settings.get_user(UserRole.ADMIN)
-    response = api_client.login(test_user.email, test_user.password)
-
-    assert response.success, f"Login failed: {response.message}"
-    assert response.status_code == 200
+        assert response.success  #Проверяем, что логин успешный
+        assert response.data is not None, "Response data is None"  # Проверяем, что данные существуют
+        assert 'user' in response.data, "Response missing 'user' field"  # Проверяем, что есть поле 'user'
+        assert response.data['user']['role'] == role.value  # Сравниваем роли
 
 
-@pytest.mark.api
-@pytest.mark.auth
-def test_login_as_support(api_client):
-    """Тест логина с ролью support"""
 
-    test_user = settings.get_user(UserRole.SUPPORT)
-    response = api_client.login(test_user.email, test_user.password)
+    @pytest.mark.parametrize(
+        "role",
+        [UserRole.USER, UserRole.ADMIN],
+        ids=["user", "admin"]
+    )
+    @pytest.mark.parametrize(
+        "password_type",
+        ["valid", "invalid"],
+        ids=["correct_password", "wrong_password"]
+    )
+    def test_login(self, role, password_type, api_client):
+        """Два декоратора на одном тесте"""
+        user = settings.get_user(role)
 
-    assert response.success, f"Login failed: {response.message}"
-    assert response.status_code == 200
+        if password_type == "valid":
+            password = user.password
+            expected = True
+        else:
+            password = "wrong_password"
+            expected = False
 
+        response = api_client.login(user.email, password)
 
-@pytest.mark.parametrize("role", [
-    UserRole.USER,
-    UserRole.VIP_USER,
-    UserRole.ADMIN,
-    UserRole.SUPPORT
-],
-    ids=["login_user", "login_vip_user", "login_admin", "login_support"]  # Название кейсов (будут видны в консоле)
-)
-def test_login_different_roles(api_client, role):
-    """Тест логина разных ролей через параметризацию"""
-    user = settings.get_user(role)
-    response = api_client.login(user.email, user.password)
+        assert response.success == expected
 
-    assert response.success  #Проверяем, что логин успешный
-    if response.data and 'user' in response.data:  # Роль в ответе соответствует ожидаемой
-        assert response.data['user']['role'] == role.value
+    @pytest.mark.parametrize(
+        "email, password, expected_status",
+        [
+            ("invalid@email.com", "wrongpassword", 401),
+            ("", "wrongpassword", 400),
+            ("invalid@email.com", "", 400),
+            ("", "", 400),
+            ("wrong_format_email", "password123", 400),
+        ],
+        ids=[
+            "invalid_email_and_password",
+            "empty_email",
+            "empty_password",
+            "empty_email_and_password",
+            "invalid_email_format"
+        ]
+    )
+    def test_login_errors(self, api_client, email, password, expected_status):
+        """Параметризированный тест ошибок логина"""
 
+        response = api_client.login(email, password)
 
-@pytest.mark.parametrize(
-    "role",
-    [UserRole.USER, UserRole.ADMIN],
-    ids=["user", "admin"]
-)
-@pytest.mark.parametrize(
-    "password_type",
-    ["valid", "invalid"],
-    ids=["correct_password", "wrong_password"]
-)
-def test_login(role, password_type, api_client):
-    """Два декоратора на одном тесте"""  # Не совсем делала самостоятельно, но все же решила оставить!
-    user = settings.get_user(role)
+        assert not response.success, "Логин с невалидными данными должен завершиться ошибкой"
 
-    if password_type == "valid":
-        password = user.password
-        expected = True
-    else:
-        password = "wrong_password"
-        expected = False
+        assert response.status_code == expected_status, f"Ожидался статус {expected_status}, но получен {response.status_code}"
 
-    response = api_client.login(user.email, password)
-
-    assert response.success == expected
+        assert response.data is None or response.data == {}, f"При ошибке логина данные пользователя не должны возвращаться"
