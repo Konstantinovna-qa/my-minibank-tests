@@ -61,11 +61,86 @@ class TestMyAuthAPI:
         assert response.success, f"Login failed: {response.message}"  # Проверяем успешность логина
         assert response.status_code == 200
 
-
         assert response.data is not None   # Проверяем, что токен есть
         assert "token" in response.data
-
 
         validation_response = api_client.validate_token()  # Валидируем токен
         assert validation_response.success, f"Token validation failed: {validation_response.message}"  # Проверяем успешность валидации
         assert validation_response.status_code == 200
+
+
+
+@pytest.mark.api
+@pytest.mark.auth
+class TestMyAuthAPI:
+
+    @pytest.mark.parametrize("role", [
+        UserRole.USER,
+        UserRole.VIP_USER,
+        UserRole.ADMIN,
+        UserRole.SUPPORT
+    ], ids=["login_user", "login_vip_user", "login_admin", "login_support"])
+    def test_login_different_roles(self, api_client, role):
+        """Тест логина разных ролей через параметризацию"""
+        user = settings.get_user(role)
+        response = api_client.login(user.email, user.password)
+
+        assert response.success  #Проверяем, что логин успешный
+        assert response.data is not None, "Response data is None"  # Проверяем, что данные существуют
+        assert 'user' in response.data, "Response missing 'user' field"  # Проверяем, что есть поле 'user'
+        assert response.data['user']['role'] == role.value  # Сравниваем роли
+
+
+
+    @pytest.mark.parametrize(
+        "role",
+        [UserRole.USER, UserRole.ADMIN],
+        ids=["user", "admin"]
+    )
+    @pytest.mark.parametrize(
+        "password_type",
+        ["valid", "invalid"],
+        ids=["correct_password", "wrong_password"]
+    )
+    def test_login(self, role, password_type, api_client):
+        """Два декоратора на одном тесте"""
+        user = settings.get_user(role)
+
+        if password_type == "valid":
+            password = user.password
+            expected = True
+        else:
+            password = "wrong_password"
+            expected = False
+
+        response = api_client.login(user.email, password)
+
+        assert response.success == expected
+
+    @pytest.mark.parametrize(
+        "email, password, expected_status",
+        [
+            ("invalid@email.com", "wrongpassword", 401),
+            ("", "wrongpassword", 400),
+            ("invalid@email.com", "", 400),
+            ("", "", 400),
+            ("wrong_format_email", "password123", 400),
+        ],
+        ids=[
+            "invalid_email_and_password",
+            "empty_email",
+            "empty_password",
+            "empty_email_and_password",
+            "invalid_email_format"
+        ]
+    )
+    def test_login_errors(self, api_client, email, password, expected_status):
+        """Параметризированный тест ошибок логина"""
+
+        response = api_client.login(email, password)
+
+        assert not response.success, "Логин с невалидными данными должен завершиться ошибкой"
+
+        assert response.status_code == expected_status, f"Ожидался статус {expected_status}, но получен {response.status_code}"
+
+        assert response.data is None or response.data == {}, f"При ошибке логина данные пользователя не должны возвращаться"
