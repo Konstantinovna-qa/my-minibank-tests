@@ -4,7 +4,9 @@ from config.settings import settings, UserRole
 from ui.pages.login_page import LoginPage
 from ui.pages.accounts_page import AccountsPage
 from ui.pages.dashboard_page import DashboardPage
+import structlog
 
+logger = structlog.get_logger(__name__)
 
 @pytest.mark.ui
 @pytest.mark.accounts
@@ -29,6 +31,9 @@ class TestUIAccountCreation:
 
         account_cards = accounts_page.get_account_cards()  # Получаем список карточек счетов
         assert len(account_cards) > 0, "The user has no accounts."  # Проверяем, что есть хотя бы один счет
+
+        first_account = account_cards[0]  # Извлекаем информацию о первом счете
+        logger.info(f"First account details: {first_account}")  # Выводим информацию первого счета
 
 
 
