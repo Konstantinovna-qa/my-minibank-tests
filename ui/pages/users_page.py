@@ -16,7 +16,7 @@ class UsersPage(BasePage):
 
     def __init__(self, driver):
         super().__init__(driver)
-        self.selectors = {
+        self.selectors.update = {
             "users_title": "//h1[text()='User Management']",
             "create_user_button": "//button[contains(text(), 'Create User')]",
 
@@ -45,9 +45,7 @@ class UsersPage(BasePage):
         """Ожидает полной загрузки страницы пользователей"""
         self.wait_for_element(self.selectors["users_title"])
         self.wait_for_element(self.selectors["create_user_button"])
-        self.wait_for_element(self.selectors["name_column"])
-        self.wait_for_element(self.selectors["email_column"])
-        self.wait_for_element(self.selectors["role_column"])
+
 
     def is_loaded(self) -> bool:
         """Проверяет, что страница пользователей загружена"""
