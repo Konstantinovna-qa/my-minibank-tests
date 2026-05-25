@@ -198,11 +198,11 @@ class TransfersPage(BasePage):
         """Проверяет отображение сообщения об ошибке."""
         if self.is_element_visible(self.selectors["error_message"]):
             return
-        error_texts = ["error", "failed", "invalid", "required"]
+        error_texts = ["error", "failed", "invalid", "required", "valid amount"]
         for text in error_texts:
             try:
                 self.wait_for_element_by_text("*", text, timeout=2)
                 return
             except:
                 continue
-        raise AssertionError("Error message not visible") 
+        raise AssertionError("Error message not visible")
