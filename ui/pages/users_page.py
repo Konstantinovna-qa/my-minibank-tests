@@ -16,7 +16,7 @@ class UsersPage(BasePage):
 
     def __init__(self, driver):
         super().__init__(driver)
-        self.selectors.update = {
+        self.selectors.update = ({
             "users_title": "//h1[text()='User Management']",
             "create_user_button": "//button[contains(text(), 'Create User')]",
 
@@ -35,7 +35,7 @@ class UsersPage(BasePage):
             "success_message": "//*[contains(text(), 'success') or contains(text(), 'created') or contains(text(), 'Created')]",
             "error_message": "//*[contains(text(), 'error') or contains(text(), 'Error')]",
             "no_users_message": "//*[contains(text(), 'No users') or contains(text(), 'No Users')]",
-        }
+        })
 
     # --------------------------------------------------------------------
     # Реализация абстрактных методов
