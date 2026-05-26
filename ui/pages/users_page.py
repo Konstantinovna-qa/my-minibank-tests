@@ -16,7 +16,7 @@ class UsersPage(BasePage):
 
     def __init__(self, driver):
         super().__init__(driver)
-        self.selectors.update = ({
+        self.selectors.update({
             "users_title": "//h1[text()='User Management']",
             "create_user_button": "//button[contains(text(), 'Create User')]",
 
