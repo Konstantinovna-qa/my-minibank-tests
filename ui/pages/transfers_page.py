@@ -206,3 +206,25 @@ class TransfersPage(BasePage):
             except:
                 continue
         raise AssertionError("Error message not visible")
+
+    def assert_transfer_form_elements_visible(self):
+        """Проверяет наличие основных элементов формы перевода"""
+
+        assert self.is_element_visible(self.selectors["transfer_form"])
+        assert self.is_element_visible(self.selectors["from_account_select"])
+        assert self.is_element_visible(self.selectors["amount_input"])
+        assert self.is_element_visible(self.selectors["to_account_select"])
+        assert self.is_element_visible(self.selectors["submit_button"])
+
+    def get_available_from_accounts_count(self) -> int:
+        """Возвращает количество доступных счетов в поле From Account."""
+
+        from_select = self.wait_for_element(self.selectors["from_account_select"])
+        options = from_select.find_elements("css selector", "option")
+
+        available_accounts = [
+            option for option in options
+            if option.get_attribute("value")
+        ]
+
+        return len(available_accounts)
