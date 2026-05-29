@@ -100,4 +100,47 @@ def test_internal_transfer_between_own_accounts(driver, user_with_two_accounts):
     transfers_page.assert_success_message()
 
     # Проверяем, что форма остается функциональной
-    assert transfers_page.is_element_immediately_visible("transfer_form"), "Форма перевода должна оставаться видимой после перевода" 
+    assert transfers_page.is_element_immediately_visible("transfer_form"), "Форма перевода должна оставаться видимой после перевода"
+
+
+
+def test_transfer_between_two_accounts(driver, user_with_two_accounts):
+        """Тест внешнего перевода между двумя разными пользователями"""
+
+        test_data_1 = make_user_with_account
+        test_data_2 = make_user_with_account
+        credentials_1 = test_data_1["credentials"]
+        credentials_2 = test_data_2["credentials"]
+        source_account = test_data_1["source_account"]
+        target_account = test_data_2["target_account"]
+
+        # Вход через UI
+        login_page = LoginPage(driver)
+        login_page.navigate_to()
+        login_page.assert_page_loaded()
+        login_page.login(credentials_1["email"], credentials_1["password"])
+
+        # Переходим к переводам
+        dashboard_page = DashboardPage(driver)
+        dashboard_page.assert_page_loaded()
+        dashboard_page.open_transfers()
+
+        transfers_page = TransfersPage(driver)
+        transfers_page.assert_page_loaded()
+
+        # Выполняем перевод
+        transfer_amount = 50.0
+        description = "UI Test: Transfer between own accounts"
+
+        transfers_page.create_internal_transfer(
+            from_account=source_account["id"],
+            to_account=target_account["id"],
+            amount=transfer_amount,
+            description=description
+        )
+
+        # Проверяем успешность перевода через PageObject (стабильные селекторы)
+        transfers_page.assert_success_message()
+
+        # Проверяем, что форма остается функциональной
+        assert transfers_page.is_element_immediately_visible("transfer_form"), "Форма перевода должна оставаться видимой после перевода"
