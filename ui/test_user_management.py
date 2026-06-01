@@ -99,7 +99,6 @@ class TestUIManagement:
             "//button[contains(text(), 'Users')]"
         ), "Users button should not be visible for USER role"
 
-        driver.get(f"{settings.base_url}/users")  # Пробуем перейти по прямой ссылке
-
+        driver.get(settings.get_page_url("/users")) # Пробуем перейти по прямой ссылке
 
         assert "Authentication required" in driver.page_source, "USER should not have access to Users page"
