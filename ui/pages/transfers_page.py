@@ -241,10 +241,10 @@ class TransfersPage(BasePage):
         )
 
     def create_external_transfer(self, from_account: str, to_account: str, amount: float, description: str = ""):
-        """Создает внешний перевод между собственными счетами."""
+        """Создает внешний перевод между счетами."""
         try:
             self.click_element(self.selectors["my_external_button"])
-        except:
+        except Exception:
             pass  # Кнопка может уже быть выбрана
 
         self.select_from_account(from_account)
