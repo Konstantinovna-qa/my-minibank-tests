@@ -41,6 +41,8 @@ class TransfersPage(BasePage):
             "submit_button": 'button[type="submit"]',
             "success_message": '[class*="success"], [role="alert"]',
             "error_message": '[class*="error"], [role="alert"]',
+            "external_account_number_input": '[placeholder="Enter account number (minimum 10 characters)"]',
+            "my_external_button": '//button[contains(., "Transfer to External Account")]',
             "my_account_button": '[data-testid="transfer-type-my-account"]'
         })
 
@@ -228,3 +230,26 @@ class TransfersPage(BasePage):
         ]
 
         return len(available_accounts)
+
+        raise AssertionError("Error message not visible")
+
+    def enter_external_account_number(self, account_number: str):
+        """Вводит номер счета получателя для внешнего перевода."""
+        self.fill_input(
+            self.selectors["external_account_number_input"],
+            account_number
+        )
+
+    def create_external_transfer(self, from_account: str, to_account: str, amount: float, description: str = ""):
+        """Создает внешний перевод между счетами."""
+        try:
+            self.click_element(self.selectors["my_external_button"])
+        except Exception:
+            pass  # Кнопка может уже быть выбрана
+
+        self.select_from_account(from_account)
+        self.enter_external_account_number(to_account)
+        self.enter_amount(amount)
+        if description:
+            self.enter_description(description)
+        self.submit_transfer()
